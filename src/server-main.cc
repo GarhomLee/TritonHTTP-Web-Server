@@ -9,12 +9,14 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
 	initLogging();
 	auto log = logger();
 
 	// Handle the command-line argument
-	if (argc != 2) {
+	if (argc != 2)
+	{
 		cerr << "Usage: " << argv[0] << " [config_file]" << endl;
 		return EX_USAGE;
 	}
@@ -22,18 +24,23 @@ int main(int argc, char** argv) {
 	// Read in the configuration file
 	INIReader config(argv[1]);
 
-	if (config.ParseError() < 0) {
+	if (config.ParseError() < 0)
+	{
 		cerr << "Error parsing config file " << argv[1] << endl;
 		return EX_CONFIG;
 	}
 
-	if (config.GetBoolean("httpd", "enabled", true)) {
+	if (config.GetBoolean("httpd", "enabled", true))
+	{
 		log->info("Web server enabled");
-		HttpdServer * httpd = new HttpdServer(config);
+		HttpdServer *httpd = new HttpdServer(config);
+		log->info("Httpd instantiated");
 		httpd->launch();
-	} else {
+	}
+	else
+	{
 		log->info("Web server disabled");
 	}
 
 	return 0;
-} 
+}

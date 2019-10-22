@@ -1,7 +1,7 @@
 
 CXX=g++
-CXXFLAGS=-std=c++11 -ggdb -Wall -Wextra -pedantic -Werror -Wnon-virtual-dtor -I../dependencies/include
-SERVEROBJS= server-main.o logger.o HttpdServer.o
+CXXFLAGS=-std=c++11 -ggdb -Wall -Wextra -pedantic -Wnon-virtual-dtor -I../dependencies/include
+SERVEROBJS= server-main.o logger.o ResponseBuilder.o RequestHandler.o MessageParser.o HttpdServer.o
 
 default: httpd
 
@@ -9,7 +9,7 @@ default: httpd
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 httpd: $(SERVEROBJS)
-	$(CXX) $(CXXFLAGS) -o httpd $(SERVEROBJS) -L../dependencies/lib -pthread
+	$(CXX) $(CXXFLAGS) -o httpd $(SERVEROBJS) -pthread
 
 .c.o:
 	$(CXX) $(CXXFLAGS) -c $< -o $@

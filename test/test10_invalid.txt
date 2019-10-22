@@ -1,0 +1,5 @@
+GET /subdir1/index.html HTTP/1.1
+Host: www.cs.ucsd.edu
+User-Agent: MyTester v1.0
+Cookie:123
+My-header: mykey0123

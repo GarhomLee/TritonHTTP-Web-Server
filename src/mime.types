@@ -536,7 +536,7 @@
 .wdp image/vnd.ms-photo
 .webarchive application/x-safari-webarchive
 .webm video/webm
-.webp image/webp /* https://en.wikipedia.org/wiki/WebP */
+.webp image/webp
 .webtest application/xml
 .wiq application/xml
 .wiz application/msword

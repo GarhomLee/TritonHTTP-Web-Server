@@ -15,7 +15,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-// #include <sys/sendfile.h>
+#include <sys/sendfile.h>
 #include <unordered_map>
 #include "logger.hpp"
 #include "ResponseBuilder.hpp"

@@ -1,5 +1,7 @@
 #include <sysexits.h>
 #include <fstream>
+#include <algorithm>
+#include <sys/sendfile.h> // Linux version
 #include "RequestHandler.hpp"
 #include "ResponseBuilder.hpp"
 
@@ -112,13 +114,15 @@ bool RequestHandler::validateKeyValuePair(string &line, string &key, string &val
         logger()->error("Not a valid key.");
         return false;
     }
-    // logger()->info("check if space at value: {}", secondHalf.find(" ", 1));
+
     if (value.find(" ") != 0)
     // space not placed correctly in value
     {
         logger()->error("Not a valid value.");
         return false;
     }
+
+    value = value.substr(1);
 
     return true;
 }
@@ -144,8 +148,9 @@ void RequestHandler::handle(string &request)
 
     /* parse key-value pair in each line and check if they are valid */
     // log->info("Starting validation check...");
-    unordered_map<string, string> headerMapping;
+    // unordered_map<string, string> headerMapping;
     string key, value;
+    bool hasHost, isClosed;
     for (string line = parse(request, "\r\n");
          !line.empty();
          line = parse(request, "\r\n"))
@@ -157,19 +162,32 @@ void RequestHandler::handle(string &request)
         }
 
         // log->info("key={}, value={}",key, value);
-        headerMapping[key] = value; // put valid key-value pair into hash map
+        // headerMapping[key] = value; // put valid key-value pair into hash map
+        transform(key.begin(), key.end(), key.begin(), ::tolower);
+        
+        if (key == "host") {
+            hasHost = true;
+        }
+        if (key == "connection") {
+            transform(value.begin(), value.end(), value.begin(), ::tolower);
+            if (value == "close") {
+                isClosed = true;
+            }
+        }
+        // log->info("key={}, value={}",key, value);
     }
 
     log->info("Validation check passed.");
     /* validation check passed, prepare for the final response */
-    if (headerMapping.count("Host") == 0) // not contain "Host"
+    // if (headerMapping.count("Host") == 0) // not contain "Host"
+    if (!hasHost) // not contain "Host"
     {
         log->error("Request does not contain Host key.");
         sendFailureResponse(400); // send back a failure response and stop
     }
 
     /* form a response */
-    bool isClosed = headerMapping.count("Connection") > 0 && headerMapping["Connection"] == "close";
+    // bool isClosed = headerMapping.count("Connection") > 0 && headerMapping["Connection"] == "close";
     sendSuccessResponse(requestedFile, isClosed);
 }
 
@@ -186,7 +204,7 @@ void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
     send(clntSocket, response.c_str(), response.size(), 0);
 
     off_t offset = 0;
-    // if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0)  // OSX version
+    // if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0) // OSX version
     if (sendfile(clntSocket, requestedFd, &offset, file_stat.st_size) < 0)  // Linux version
     {
         logger()->error("Failed to send the file.");
@@ -194,8 +212,12 @@ void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
         return;
     }
 
-    logger()->info("file size = {}", file_stat.st_size);
+    // logger()->info("file size = {}", file_stat.st_size);
     logger()->info("Response to a valid request has sent back.");
+    if (isClosed) {
+        logger()->info("Connection closed.");
+        close(clntSocket);  // this connection should be closed as specified
+    }
 }
 
 /* send back a failure response */

@@ -2,8 +2,9 @@ GET / HTTP/1.1
 Host: www.cs.ucsd.edu
 User-Agent: MyTester v1.0
 Cookie: 123
+conNEction: ClosE
 
-GET /kitten.jpg HTTP/1.1
+GET /subdir1 HTTP/1.1
 Host: www.cs.ucsd.edu
 User-Agent: MyTester v1.0
 Cookie: 123

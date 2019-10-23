@@ -19,9 +19,8 @@ void MessageParser::receive()
     /* receive messages and parse all possible requests */
     while (true)
     {
-        memset(buffer, 0, BUFFER_SIZE); // clear out the receive buffer
+        memset(buffer, 0, BUFFER_SIZE);                           // clear out the receive buffer
         int recvBytes = recv(clntSocket, buffer, BUFFER_SIZE, 0); // get actually received bytes
-        // int recvBytes = -1;
 
         if (recvBytes < 0) // error ocurrs at client side
         {
@@ -41,7 +40,8 @@ void MessageParser::receive()
         {
             log->info("Client has closed connection.");
             close(clntSocket);
-            exit(1); // return;
+            exit(1);
+            // return;
         }
 
         /* transfer chars from a buffer char array to a buffer string */

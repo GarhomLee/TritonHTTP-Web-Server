@@ -63,7 +63,7 @@ void MessageParser::parseRequests()
     while (receivedMessage.find("\r\n\r\n") != string::npos)
     {
         count++;
-        log->info("{} request(s) found.", count); // print log
+        log->info("Request {} found.", count); // print log
 
         int endIndex = 4 + receivedMessage.find("\r\n\r\n");
         string request = receivedMessage.substr(0, endIndex); // get the request including 2 CRLFs

@@ -8,11 +8,25 @@ ResponseBuilder::ResponseBuilder(struct config_info &info) : ci(info)
     httpVersion = "HTTP/1.1 ";            // specify http version
     server = "Server: ProjectServer 1.0"; // specify server version
     CRLF = "\r\n";                        // delimiter
-    // logger()->info("In MessageParse.cc, doc_root=\"{}\"", ci.doc_root);
+}
+
+/* build response for 200 */
+string ResponseBuilder::response_200(int code, string &requestedFile, bool isClosed)
+{
+    string response = httpVersion + "200 OK" + CRLF;
+    response += server + CRLF;
+    if (isClosed) {
+        response += "Connection: close" + CRLF;
+    }
+
+    
+
+    response += CRLF;
+    return response;
 }
 
 /* build response for error */
-string ResponseBuilder::response_error(const int &errorCode)
+string ResponseBuilder::response_error(int errorCode)
 {
     string response = httpVersion;
 
@@ -26,11 +40,6 @@ string ResponseBuilder::response_error(const int &errorCode)
     }
 
     response += server + CRLF;
-    // if (isClosed)
-    // {
-    //     response += "Connection: close" + CRLF;
-    // }
-
     response += CRLF;
     return response;
 }
@@ -39,7 +48,7 @@ string ResponseBuilder::response_error(const int &errorCode)
 //     return ci.doc_root;
 // }
 
-size_t ResponseBuilder::getMapSize()
-{
-    return ci.mime_mapping.size();
-}
+// size_t ResponseBuilder::getMapSize()
+// {
+//     return ci.mime_mapping.size();
+// }

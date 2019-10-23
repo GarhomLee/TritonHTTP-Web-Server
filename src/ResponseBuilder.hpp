@@ -17,26 +17,28 @@
 
 using namespace std;
 
-struct config_info {
-	string port;
-	string doc_root;
-	unordered_map<string, string> mime_mapping;
+struct config_info
+{
+    string port;
+    string doc_root;
+    unordered_map<string, string> mime_mapping;
 };
 
-class ResponseBuilder {
-    public:
-        ResponseBuilder(struct config_info& info);
-        string response_200();
-        string response_error(const int& errorCode);
-        // string getDocRoot();
-        size_t getMapSize();
+class ResponseBuilder
+{
+public:
+    ResponseBuilder(struct config_info &info);
+    string response_200(int code, string &requestedFile, bool isClosed);
+    string response_error(int errorCode);
+    // string getDocRoot();
+    // size_t getMapSize();
 
-    private:
-        // INIReader& config;
-        string httpVersion;
-        string server;
-        string CRLF;
-        struct config_info ci;
+private:
+    // INIReader& config;
+    string httpVersion;
+    string server;
+    string CRLF;
+    struct config_info ci;
 };
 
 #endif // RESPONSEBUILDER_HPP

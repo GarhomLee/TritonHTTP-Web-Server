@@ -24,8 +24,8 @@ class RequestHandler
 {
 public:
     RequestHandler(int socketfd, struct config_info &info);
-    // string getRequest();
     void handle(string &request);
+    void sendSuccessResponse(int code, string &requestedFile, bool isClosed);
     void sendFailureResponse(int code);
 
 private:

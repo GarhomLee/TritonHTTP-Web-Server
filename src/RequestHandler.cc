@@ -49,13 +49,12 @@ int RequestHandler::parseInitialLine(string &initialLine, string &requestedFile)
         return 400; // client error
     }
 
-    if (initialLine.find("/") != urlStart) // url does not start correctly
+    string url = initialLine.substr(urlStart, urlEnd - urlStart);
+    if (url.find("/") != 0 || url.find(" ") != string::npos) // url does not start correctly
     {
-        log->error("URL does not start with \"/\".");
+        log->error("Malformed URL.");
         return 400; // client error
     }
-
-    string url = initialLine.substr(urlStart, urlEnd - urlStart);
     string concate_path = ci.doc_root + url; // concatenate to form a raw path
     // log->info("URL found: \"{}\"", url);
     // log->info("ci.doc_root: \"{}\"", ci.doc_root);
@@ -96,18 +95,41 @@ int RequestHandler::parseInitialLine(string &initialLine, string &requestedFile)
     return 200; // ok
 }
 
-/* check if the given line can form a valid key-value pair */
+/**
+ *  check if the given line can form a valid key-value pair, return true if it is valid,
+ *  otherwise return false.
+ */
 bool RequestHandler::validateKeyValuePair(string &line, string &key, string &value)
 {
-    return false;
+    size_t splitPos = line.find(":");
+    if (splitPos == string::npos) // miss the colon
+    {
+        logger()->error("Missing colon.");
+        return false;
+    }
+
+    key = line.substr(0, splitPos);
+    value = line.substr(splitPos + 1);
+    if (key.find(" ") != string::npos) // key cannot contain space
+    {
+        logger()->error("Not a valid key.");
+        return false;
+    }
+    // logger()->info("check if space at value: {}", secondHalf.find(" ", 1));
+    if (value.find(" ") != 0)
+    // space not placed correctly in value
+    {
+        logger()->error("Not a valid value.");
+        return false;
+    }
+
+    return true;
 }
 
 /* handle a request and send back a response to the client */
 void RequestHandler::handle(string &request)
 {
     auto log = logger();
-    // ResponseBuilder rb(ci);
-    // log->info("In RequestHandler.cc, doc_root=\"{}\"", ci.doc_root);
     string response;
     int code;
 
@@ -119,9 +141,15 @@ void RequestHandler::handle(string &request)
     if ((code = parseInitialLine(initialLine, requestedFile)) != 200)
     {
         sendFailureResponse(code); // send back a failure response and stop
+
+        if (code == 404) // if it's 404, continue to wait for the next request
+        {
+            return;
+        }
     }
 
     /* parse key-value pair in each line */
+    // log->info("Starting validation check...");
     unordered_map<string, string> headerMapping;
     string key, value;
     for (string line = parse(request, "\r\n");
@@ -134,30 +162,47 @@ void RequestHandler::handle(string &request)
             sendFailureResponse(400); // send back a failure response and stop
         }
 
-        if (headerMapping.count(key) > 0)  // duplicate found
-        {
-            log->error("Request contains duplicate keys.");
-            sendFailureResponse(400); // send back a failure response and stop
-        }
+        // log->info("key={}, value={}",key, value);
+        headerMapping[key] = value; // put valid key-value pair into hash map
     }
 
-    // log->info("the requested file is: \"{}\"", requestedFile);
-    // send(clntSocket, request.c_str(), request.size(), 0);
-    // send(clntSocket, initialLine.c_str(), initialLine.size(), 0);
+    log->info("Validation check passed.");
+    /* validation check passed, prepare for the final response */
+    if (headerMapping.count("Host") == 0) // not contain "Host"
+    {
+        log->error("Request does not contain Host key.");
+        sendFailureResponse(400); // send back a failure response and stop
+    }
 
-    // response = rb.response_error(404, false);
-    // log->info("test config info: map size = {}", rb.getMapSize());
-    // log->info("test config info: doc_root = {}", rb.getDocRoot());
-    // send(clntSocket, response.c_str(), response.size(), 0);
-    // return "done.\n";
+    /* form a response */
+    bool isClosed = headerMapping.count("Connection") > 0 && headerMapping["Connection"] == "close";
+    sendSuccessResponse(200, requestedFile, isClosed);
 }
 
+/* send back a success response */
+void RequestHandler::sendSuccessResponse(int code, string &requestedFile, bool isClosed)
+{
+    ResponseBuilder rb(ci);
+    string response = rb.response_200(code, requestedFile, isClosed); // create response according to error code
+    send(clntSocket, response.c_str(), response.size(), 0);
+    logger()->info("Response to a valid request has sent back.", code);
+}
+
+/* send back a failure response */
 void RequestHandler::sendFailureResponse(int code)
 {
     ResponseBuilder rb(ci);
     string response = rb.response_error(code); // create response according to error code
     send(clntSocket, response.c_str(), response.size(), 0);
-    logger()->error("Invalid request with code {}.\nConnection closed.", code);
-    close(clntSocket);
-    exit(1);
+    if (code == 400)
+    {
+        logger()->error("Invalid request with code {}.\nConnection closed.", code);
+        close(clntSocket);
+        exit(1);
+    }
+    else
+    {
+        logger()->error("Invalid request with code {}.\nWaiting for the next request.", code);
+        return;
+    }
 }

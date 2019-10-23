@@ -22,10 +22,10 @@ string ResponseBuilder::response_200(string &extension, bool isClosed,
     strftime(time, 256, "%a, %d %b %y %T %z", localtime(&file_stat.st_mtime));
     response += "Last-Modified: " + string(time) + CRLF;
 
+    response += "Content-Length: " + to_string(file_stat.st_size) + CRLF;
+
     string type = ci.mime_mapping.count(extension) > 0 ? ci.mime_mapping[extension] : "application/octet-stream";
     response += "Content-Type: " + type + CRLF;
-
-    response += "Content-Length: " + to_string((int) file_stat.st_size) + CRLF;
 
     if (isClosed)
     {

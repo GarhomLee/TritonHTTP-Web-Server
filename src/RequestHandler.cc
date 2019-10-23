@@ -194,6 +194,7 @@ void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
         return;
     }
 
+    logger()->info("file size = {}", file_stat.st_size);
     logger()->info("Response to a valid request has sent back.");
 }
 

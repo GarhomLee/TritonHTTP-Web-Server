@@ -25,16 +25,14 @@ class RequestHandler
 {
 public:
     RequestHandler(int socketfd, struct config_info &info);
-    void handle(string &request);
+    bool handle(string &request);
     void sendSuccessResponse(string &requestedFile, bool isClosed);
     void sendFailureResponse(int code);
 
 private:
     int clntSocket;
     struct config_info ci;
-    //     string receivedMessage;
-    //     string request;
-    //     string initialLine;
+    
     string parse(string &request, string delimiter);
     int parseInitialLine(string &initialLine, string &requestedFile);
     bool validateKeyValuePair(string &line, string &key, string &value);

@@ -1,7 +1,7 @@
 #include <sysexits.h>
 #include <fstream>
 #include <algorithm>
-#include <sys/sendfile.h> // Linux version
+// #include <sys/sendfile.h> // Linux version
 #include "RequestHandler.hpp"
 #include "ResponseBuilder.hpp"
 
@@ -128,7 +128,7 @@ bool RequestHandler::validateKeyValuePair(string &line, string &key, string &val
 }
 
 /* handle a request and send back a response to the client */
-void RequestHandler::handle(string &request)
+bool RequestHandler::handle(string &request)
 {
     auto log = logger();
     int code;
@@ -142,13 +142,11 @@ void RequestHandler::handle(string &request)
 
         if (code == 404) // if it's 404, continue to wait for the next request
         {
-            return;
+            return false;  // not closed yet
         }
     }
 
     /* parse key-value pair in each line and check if they are valid */
-    // log->info("Starting validation check...");
-    // unordered_map<string, string> headerMapping;
     string key, value;
     bool hasHost, isClosed;
     for (string line = parse(request, "\r\n");
@@ -189,6 +187,8 @@ void RequestHandler::handle(string &request)
     /* form a response */
     // bool isClosed = headerMapping.count("Connection") > 0 && headerMapping["Connection"] == "close";
     sendSuccessResponse(requestedFile, isClosed);
+
+    return isClosed;
 }
 
 /* send back a success response */
@@ -204,8 +204,8 @@ void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
     send(clntSocket, response.c_str(), response.size(), 0);
 
     off_t offset = 0;
-    // if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0) // OSX version
-    if (sendfile(clntSocket, requestedFd, &offset, file_stat.st_size) < 0)  // Linux version
+    if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0) // OSX version
+    // if (sendfile(clntSocket, requestedFd, &offset, file_stat.st_size) < 0)  // Linux version
     {
         logger()->error("Failed to send the file.");
         // exit(1);

@@ -11,13 +11,11 @@ MessageParser::MessageParser(int socketfd, struct config_info &info)
 void MessageParser::receive()
 {
     auto log = logger();
-    // string receivedMessage;
     char buffer[BUFFER_SIZE];
-    // ResponseBuilder rb(ci);
-    // log->info("In MessageParse.cc, doc_root=\"{}\"", ci.doc_root);
 
     /* receive messages and parse all possible requests */
-    while (true)
+    bool isClosed = false;
+    while (!isClosed)
     {
         memset(buffer, 0, BUFFER_SIZE);                           // clear out the receive buffer
         int recvBytes = recv(clntSocket, buffer, BUFFER_SIZE, 0); // get actually received bytes
@@ -49,18 +47,22 @@ void MessageParser::receive()
         {
             receivedMessage += buffer[i];
         }
-        parseRequests();
+
+        parseRequests(isClosed);
+        // log->info("isClosed has been change: {}", isClosed);
     }
+
+    // log->info("out of the while loop.");
 }
 
 /* process all complete requests */
-void MessageParser::parseRequests()
+void MessageParser::parseRequests(bool &isClosed)
 {
     RequestHandler requestHandler(clntSocket, ci);
     auto log = logger();
     // log->info("In MessageParse.cc, doc_root=\"{}\"", ci.doc_root);
     int count = 0;
-    while (receivedMessage.find("\r\n\r\n") != string::npos)
+    while (!isClosed && receivedMessage.find("\r\n\r\n") != string::npos)
     {
         count++;
         log->info("Request {} found.", count); // print log
@@ -74,7 +76,7 @@ void MessageParser::parseRequests()
 
         // send(clntSocket, receivedMessage.c_str(), receivedMessage.size(), 0);
 
-        requestHandler.handle(request); // handle the request
-                                        // send(clntSocket, response.c_str(), response.size(), 0);
+        isClosed = requestHandler.handle(request); // handle the request
+                                                   // send(clntSocket, response.c_str(), response.size(), 0);
     }
 }

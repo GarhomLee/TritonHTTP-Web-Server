@@ -19,17 +19,19 @@
 
 using namespace std;
 
-class MessageParser {
-    public:
-        MessageParser(int socketfd, struct config_info& info);
-        // string getRequest();
-        void receive();
-        void parseRequests();
-    private:
-        int clntSocket;
-        string receivedMessage;
-        // string request;
-        struct config_info ci;
+class MessageParser
+{
+public:
+    MessageParser(int socketfd, struct config_info &info);
+    // string getRequest();
+    void receive();
+    void parseRequests(bool &isClosed);
+
+private:
+    int clntSocket;
+    string receivedMessage;
+    // string request;
+    struct config_info ci;
 };
 
 #endif // MESSAGEPARSER_HPP

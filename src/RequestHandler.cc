@@ -179,7 +179,7 @@ void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
     ResponseBuilder rb(ci);
     struct stat file_stat;
     int requestedFd = open(requestedFile.c_str(), O_RDONLY);
-    fstat(requestedFd, &file_stat);
+    fstat(requestedFd, &file_stat); // get content length and last modified time
 
     string extenstion = requestedFile.substr(requestedFile.find("."));  // get extension type
     string response = rb.response_200(extenstion, isClosed, file_stat); // create response according to error code

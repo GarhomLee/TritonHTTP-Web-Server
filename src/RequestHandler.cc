@@ -144,6 +144,8 @@ bool RequestHandler::handle(string &request)
         {
             return false;  // not closed yet
         }
+
+        return true;
     }
 
     /* parse key-value pair in each line and check if they are valid */
@@ -157,6 +159,7 @@ bool RequestHandler::handle(string &request)
         {
             log->error("Request contains invalid key-value pair line.");
             sendFailureResponse(400); // send back a failure response and stop
+            return true;
         }
 
         // log->info("key={}, value={}",key, value);
@@ -182,6 +185,7 @@ bool RequestHandler::handle(string &request)
     {
         log->error("Request does not contain Host key.");
         sendFailureResponse(400); // send back a failure response and stop
+        return true;
     }
 
     /* form a response */
@@ -230,7 +234,8 @@ void RequestHandler::sendFailureResponse(int code)
     {
         logger()->error("Invalid request with code {}.\nConnection closed.", code);
         close(clntSocket);
-        exit(1); // exit if 400
+        // exit(1); // exit if 400
+        return;
     }
 
     logger()->error("Invalid request with code {}.\nWaiting for the next request.", code);

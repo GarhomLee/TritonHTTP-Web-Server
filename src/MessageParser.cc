@@ -33,13 +33,15 @@ void MessageParser::receive()
 
             RequestHandler requestHandler(clntSocket, ci);
             requestHandler.sendFailureResponse(400); // send back a failure response and stop
+            isClosed = true;
+            return;
         }
         else if (recvBytes == 0) // client has closed connection
         {
             log->info("Client has closed connection.");
             close(clntSocket);
-            exit(1);
-            // return;
+            isClosed = true;
+            return;
         }
 
         /* transfer chars from a buffer char array to a buffer string */

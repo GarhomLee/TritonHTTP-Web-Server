@@ -28,13 +28,11 @@ class ResponseBuilder
 {
 public:
     ResponseBuilder(struct config_info &info);
-    string response_200(int code, string &requestedFile, bool isClosed);
+    string response_200(string &extension, bool isClosed,
+                        struct stat file_stat);
     string response_error(int errorCode);
-    // string getDocRoot();
-    // size_t getMapSize();
 
 private:
-    // INIReader& config;
     string httpVersion;
     string server;
     string CRLF;

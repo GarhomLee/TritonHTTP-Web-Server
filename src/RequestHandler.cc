@@ -9,9 +9,7 @@ RequestHandler::RequestHandler(int socketfd, struct config_info &info)
 /* parse the the first substring separated by the delimiter, and update str */
 string RequestHandler::parse(string &str, string delimiter)
 {
-    // auto log  = logger();
     int endIndex = str.find(delimiter);
-    // log->info("length of delimiter is: {}", delimiter.length());
 
     string substring = endIndex == 0 ? "" : str.substr(0, endIndex); // get the first part separated by
                                                                      // the delimiter (excluded)
@@ -68,7 +66,6 @@ int RequestHandler::parseInitialLine(string &initialLine, string &requestedFile)
     }
 
     requestedFile = string(pathBuffer);
-    // string absolutePath(pathBuffer); // store the converted absolute path
     // log->info("Absolute path of concate_path: \"{}\"", absolutePath);
     if (requestedFile.find(ci.doc_root) != 0) // root directory is not in the path
     {
@@ -130,10 +127,7 @@ bool RequestHandler::validateKeyValuePair(string &line, string &key, string &val
 void RequestHandler::handle(string &request)
 {
     auto log = logger();
-    string response;
     int code;
-
-    // string requestCopy = request;  // create a copy of the request
     string initialLine = parse(request, "\r\n"); // get the initial line
     string requestedFile;                        // store the absolute path of the requested file
 
@@ -148,7 +142,7 @@ void RequestHandler::handle(string &request)
         }
     }
 
-    /* parse key-value pair in each line */
+    /* parse key-value pair in each line and check if they are valid */
     // log->info("Starting validation check...");
     unordered_map<string, string> headerMapping;
     string key, value;
@@ -176,16 +170,30 @@ void RequestHandler::handle(string &request)
 
     /* form a response */
     bool isClosed = headerMapping.count("Connection") > 0 && headerMapping["Connection"] == "close";
-    sendSuccessResponse(200, requestedFile, isClosed);
+    sendSuccessResponse(requestedFile, isClosed);
 }
 
 /* send back a success response */
-void RequestHandler::sendSuccessResponse(int code, string &requestedFile, bool isClosed)
+void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
 {
     ResponseBuilder rb(ci);
-    string response = rb.response_200(code, requestedFile, isClosed); // create response according to error code
+    struct stat file_stat;
+    int requestedFd = open(requestedFile.c_str(), O_RDONLY);
+    fstat(requestedFd, &file_stat);
+
+    string extenstion = requestedFile.substr(requestedFile.find("."));  // get extension type
+    string response = rb.response_200(extenstion, isClosed, file_stat); // create response according to error code
     send(clntSocket, response.c_str(), response.size(), 0);
-    logger()->info("Response to a valid request has sent back.", code);
+
+    off_t offset = 0;
+    if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0)
+    {
+        logger()->error("Failed to send the file.");
+        // exit(1);
+        return;
+    }
+
+    logger()->info("Response to a valid request has sent back.");
 }
 
 /* send back a failure response */
@@ -198,11 +206,9 @@ void RequestHandler::sendFailureResponse(int code)
     {
         logger()->error("Invalid request with code {}.\nConnection closed.", code);
         close(clntSocket);
-        exit(1);
+        exit(1); // exit if 400
     }
-    else
-    {
-        logger()->error("Invalid request with code {}.\nWaiting for the next request.", code);
-        return;
-    }
+
+    logger()->error("Invalid request with code {}.\nWaiting for the next request.", code);
+    return; // wait for next request if 404
 }

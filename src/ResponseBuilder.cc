@@ -11,15 +11,27 @@ ResponseBuilder::ResponseBuilder(struct config_info &info) : ci(info)
 }
 
 /* build response for 200 */
-string ResponseBuilder::response_200(int code, string &requestedFile, bool isClosed)
+string ResponseBuilder::response_200(string &extension, bool isClosed,
+                                     struct stat file_stat)
 {
     string response = httpVersion + "200 OK" + CRLF;
+
     response += server + CRLF;
-    if (isClosed) {
+
+    char time[256] = "";
+    strftime(time, 256, "%a, %d %b %y %T %z", localtime(&file_stat.st_mtime));
+    response += "Last Modified: " + string(time) + CRLF;
+
+    string type = ci.mime_mapping.count(extension) > 0 ? 
+                                ci.mime_mapping[extension] : "application/octet-stream";
+    response += "Content-Type: " + type + CRLF;
+
+    response += "Content-Length: " + to_string(file_stat.st_size) + CRLF;
+
+    if (isClosed)
+    {
         response += "Connection: close" + CRLF;
     }
-
-    
 
     response += CRLF;
     return response;
@@ -43,12 +55,3 @@ string ResponseBuilder::response_error(int errorCode)
     response += CRLF;
     return response;
 }
-
-// string ResponseBuilder::getDocRoot() {
-//     return ci.doc_root;
-// }
-
-// size_t ResponseBuilder::getMapSize()
-// {
-//     return ci.mime_mapping.size();
-// }

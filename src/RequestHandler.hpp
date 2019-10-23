@@ -13,7 +13,9 @@
 #include <sstream>
 #include <fstream>
 #include <limits.h>
+#include <sys/stat.h>
 #include <stdlib.h>
+// #include <sys/sendfile.h>
 #include <unordered_map>
 #include "logger.hpp"
 #include "ResponseBuilder.hpp"
@@ -25,7 +27,7 @@ class RequestHandler
 public:
     RequestHandler(int socketfd, struct config_info &info);
     void handle(string &request);
-    void sendSuccessResponse(int code, string &requestedFile, bool isClosed);
+    void sendSuccessResponse(string &requestedFile, bool isClosed);
     void sendFailureResponse(int code);
 
 private:

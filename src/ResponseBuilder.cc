@@ -25,7 +25,7 @@ string ResponseBuilder::response_200(string &extension, bool isClosed,
     string type = ci.mime_mapping.count(extension) > 0 ? ci.mime_mapping[extension] : "application/octet-stream";
     response += "Content-Type: " + type + CRLF;
 
-    response += "Content-Length: " + to_string(file_stat.st_size) + CRLF;
+    response += "Content-Length: " + to_string((int) file_stat.st_size) + CRLF;
 
     if (isClosed)
     {

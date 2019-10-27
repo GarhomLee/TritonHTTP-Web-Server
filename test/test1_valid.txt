@@ -1,4 +1,4 @@
-GET /subdir1 HTTP/1.1
+GET /index.html/ HTTP/1.1
 Host: www.cs.ucsd.edu
 User-Agent: MyTester v1.0
 Cookie: 123

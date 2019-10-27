@@ -1,7 +1,7 @@
 #include <sysexits.h>
 #include <fstream>
 #include <algorithm>
-#include <sys/sendfile.h> // Linux version
+// #include <sys/sendfile.h> // Linux version
 #include "RequestHandler.hpp"
 #include "ResponseBuilder.hpp"
 
@@ -68,7 +68,7 @@ int RequestHandler::parseInitialLine(string &initialLine, string &requestedFile)
     }
 
     requestedFile = string(pathBuffer);
-    // log->info("Absolute path of concate_path: \"{}\"", absolutePath);
+    // log->info("Absolute path of concate_path: \"{}\"", requestedFile);
     if (requestedFile.find(ci.doc_root) != 0) // root directory is not in the path
     {
         log->error("URL escaped.");
@@ -208,8 +208,8 @@ void RequestHandler::sendSuccessResponse(string &requestedFile, bool isClosed)
     send(clntSocket, response.c_str(), response.size(), 0);
 
     off_t offset = 0;
-    // if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0) // OSX version
-    if (sendfile(clntSocket, requestedFd, &offset, file_stat.st_size) < 0)  // Linux version
+    if (sendfile(requestedFd, clntSocket, offset, &offset, NULL, 0) < 0) // OSX version
+    // if (sendfile(clntSocket, requestedFd, &offset, file_stat.st_size) < 0)  // Linux version
     {
         logger()->error("Failed to send the file.");
         // exit(1);

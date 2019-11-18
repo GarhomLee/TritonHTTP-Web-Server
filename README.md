@@ -1,2 +1,3 @@
-# cse-proj1
-CSE 224 Fall 2019 Project 1 starter code
+# TritonHTTP Web Server
+
+A web server of TritonHTTP based on a subset of the HTTP/1.1 specification developed in C++
